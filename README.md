@@ -1,149 +1,337 @@
-# Pet Passport: Pet-friendly route planner
+# Pet Passport Agent — AI Travel Assistant for Pets
 
-This directory contains the **Pet Passport** application, a demo of an AI Agent using the Model Context Protocol (MCP) to combine data analysis and real-world location services.
+An intelligent AI agent built using **Google Agent Development Kit (ADK)** and **Model Context Protocol (MCP)** that helps pet owners explore pet-friendly locations, discover nearby services, and analyze pet-related data through connected tools.
 
-## Demo Overview
+This project demonstrates how modern AI agents go beyond simple chatbot interactions by combining **LLM reasoning**, **external tool usage**, and **real-world data access** through MCP servers.
 
-Pet Passport helps users plan a perfect day out with their dog based on breed popularity in New York City. The agent uses a "Macro-to-Micro" reasoning chain:
-1.  **Strategic Discovery (BigQuery):** Identifies the NYC Zip Code with the highest population for a specific breed.
-2.  **Local Execution (Maps):** Uses that Zip Code as a location bias to find "pet friendly cafes" and "dog parks".
-3.  **Itinerary Generation:** Combines the data to create a "Pet Passport" itinerary.
+---
 
-The agent is built using the `google-adk` framework and powered by `gemini-3.1`.
+## Project Overview
 
-## Dataset
+Planning travel with pets often requires searching multiple platforms for:
 
-This demo uses the [NYC Dog Licensing Dataset](https://data.cityofnewyork.us/Health/NYC-Dog-Licensing-Dataset/nu7n-tubp) from NYC Open Data. It contains records of licensed dogs in New York City.
+* Pet-friendly places
+* Nearby veterinary services
+* Location information
+* Breed-related insights
+* Regional pet data
 
-## Project Structure
+The **Pet Passport Agent** solves this by acting as an AI assistant that can understand user requests, decide which tools are required, call external services, and return useful answers.
+
+Instead of manually searching different systems, users interact with one intelligent agent.
+
+---
+
+# Architecture
+
+The project follows an agentic architecture where the model acts as the reasoning layer and external systems are connected through MCP tools.
+
+```text
+User Query
+     |
+     v
+Google ADK Agent
+     |
+     v
+Gemini 2.5 Flash
+(Reasoning Layer)
+     |
+     |
+     +----------------------+
+     |                      |
+     v                      v
+Google Maps MCP        BigQuery MCP
+Tool Server            Tool Server
+     |                      |
+     v                      v
+Places Data            NYC Dog Dataset
+     |
+     v
+Final AI Response
+```
+
+---
+
+# How The Agent Works
+
+The agent contains three core components.
+
+---
+
+## 1. Reasoning Engine
+
+Powered by **Gemini 2.5 Flash**
+
+Responsibilities:
+
+* Understand user intent
+* Decide required actions
+* Select appropriate MCP tools
+* Generate natural language responses
+
+---
+
+## 2. Model Context Protocol (MCP) Layer
+
+MCP enables the agent to communicate with external tools and services using a standardized protocol.
+
+The project integrates multiple MCP servers.
+
+---
+
+## Google Maps MCP Toolset
+
+Provides location intelligence capabilities.
+
+Features:
+
+* Search locations
+* Find pet-related services
+* Retrieve location information
+* Provide Google Maps links
+
+Example:
+
+```
+Find dog-friendly parks near New York
+```
+
+The agent calls the Maps MCP server and returns real-world location information.
+
+---
+
+## BigQuery MCP Toolset
+
+Provides structured data analysis capabilities.
+
+Connected Dataset:
+
+```
+nyc_dogs.licenses
+```
+
+Features:
+
+* Query NYC dog licensing data
+* Analyze dog breed statistics
+* Extract insights from public datasets
+
+Example:
+
+```
+What are the most popular dog breeds in NYC?
+```
+
+The agent creates BigQuery requests and summarizes the results.
+
+---
+
+# Features
+
+* AI-powered pet travel assistant
+* Google ADK based agent architecture
+* Model Context Protocol integration
+* Google Maps tool connectivity
+* BigQuery data analytics
+* Natural language interaction
+* Cloud-ready architecture
+* Environment based configuration
+
+---
+
+# Technology Stack
+
+| Technology                         | Purpose                     |
+| ---------------------------------- | --------------------------- |
+| Google Agent Development Kit (ADK) | Agent framework             |
+| Gemini 2.5 Flash                   | AI reasoning model          |
+| Model Context Protocol (MCP)       | Tool communication protocol |
+| Google Maps Platform               | Location intelligence       |
+| Google BigQuery                    | Data analysis               |
+| Python                             | Backend development         |
+| Google Cloud Run                   | Deployment                  |
+| Google Cloud Platform              | Cloud infrastructure        |
+
+---
+
+# Project Structure
 
 ```text
 petpassport/
-├── petpassport/
-│   ├── __init__.py
-│   ├── agent.py             # Agent definition using ADK
-│   ├── tools.py             # MCP Tool configuration (BigQuery & Maps)
-│   └── main.py              # FastAPI application exposing the agent
-├── pyproject.toml           # Project dependencies
-└── README.md                # This documentation
+
+├── agent.py
+│   └── Agent definition and instructions
+
+├── tools.py
+│   └── MCP server connections
+
+├── .env
+│   └── Environment variables
+
+├── requirements.txt
+│   └── Python dependencies
+
+└── README.md
 ```
 
-## Prerequisites
+---
 
-*   **Python 3.13+**
-*   **Google Cloud Project** with access to BigQuery and Maps MCP endpoints.
-*   **Environment Variables** (Store these in a `.env` file in the project root):
-    *   `MAPS_API_KEY`: Your Google Maps API key.
-    *   `GOOGLE_CLOUD_PROJECT`: Your Google Cloud project ID.
+# Installation And Setup
 
-## Deployment Guide
-
-Follow these steps to set up and run the demo.
-
-### 1. Authenticate with Google Cloud
-
-Set your active Google Cloud project and authenticate. This is required for the ADK to access BigQuery.
+## 1. Clone Repository
 
 ```bash
-gcloud config set project [YOUR-PROJECT-ID]
-gcloud auth application-default login --project [YOUR-PROJECT-ID]
+git clone <repository-url>
+
+cd petpassport
 ```
 
-*Note: If you encounter errors about a different project during authentication, you can bypass it by disabling the quota project and setting it manually:*
-```bash
-gcloud auth application-default login --disable-quota-project
-gcloud auth application-default set-quota-project [YOUR-PROJECT-ID]
-```
+---
 
-### 3. Configure Environment
+## 2. Create Virtual Environment
 
-Run the environment setup script. This script will:
-*   Enable necessary Google Cloud APIs (Maps, BigQuery, remote MCP).
-*   Create a restricted Google Maps Platform API Key.
-*   Create a `.env` file with required environment variables.
+Linux/macOS:
 
 ```bash
-chmod +x setup/setup_env.sh
-./setup/setup_env.sh
+python3 -m venv .venv
+
+source .venv/bin/activate
 ```
 
-### 4. Provision BigQuery
-
-Run the setup script. This script automates the following:
-*   Creates a Cloud Storage bucket.
-*   Uploads the CSV data files.
-*   Creates the `nyc_dogs` BigQuery dataset.
-*   Loads the data into BigQuery table `licenses`.
+Windows:
 
 ```bash
-chmod +x setup/setup_bigquery.sh
-./setup/setup_bigquery.sh
+python -m venv .venv
+
+.venv\Scripts\activate
 ```
 
-## Installation
+---
 
-1.  Navigate to the project directory:
-    ```bash
-    cd examples/petpassport
-    ```
+## 3. Install Dependencies
 
-2.  Create a virtual environment:
-    ```bash
-    python3 -m venv .venv
-    ```
+```bash
+pip install -r requirements.txt
+```
 
-3.  Activate the virtual environment:
-    ```bash
-    source .venv/bin/activate
-    ```
+---
 
-4.  Install dependencies:
-    ```bash
-    pip install google-adk==1.28.0 python-dotenv google-genai pillow
-    ```
+## 4. Configure Environment Variables
 
-## Running the Application Locally
+Create a `.env` file:
 
-To run the application locally on your machine:
+```env
+GOOGLE_CLOUD_PROJECT=your-project-id
 
-1.  **Install Uvicorn** (if not already installed):
-    ```bash
-    pip install uvicorn
-    ```
+GOOGLE_API_KEY=your-api-key
 
-2.  **Start the FastAPI server:**
-    ```bash
-    uvicorn petpassport.main:app --reload
-    ```
+MAPS_API_KEY=your-maps-api-key
+```
 
-3.  **Open the UI:**
-    Navigate to `http://127.0.0.1:8000/ui/` in your browser to interact with the Pet Passport interface.
+---
 
-**Sample prompt:** "I have a Labrador Retriever. Where should we go in NYC?"
+## 5. Run Locally
 
-## Deploying to Cloud Run
+Start the ADK development server:
 
-To deploy the Pet Passport agent to Google Cloud Run:
+```bash
+adk web
+```
 
-1.  **Ensure you are in the project directory**:
-    ```bash
-    cd examples/petpassport
-    ```
+Open:
 
-2.  **Deploy to Cloud Run**:
-    Use the following pure `gcloud` command to build and deploy the application to Cloud Run. Replace `[YOUR-REGION]` with your desired region (e.g., `us-west1`).
+```text
+http://127.0.0.1:8000
+```
 
-    ```bash
-    gcloud run deploy petpassport \
-      --source petpassport \
-      --region [YOUR-REGION] \
-      --allow-unauthenticated \
-      --labels dev-tutorial=google-mcp
-    ```
+---
 
-    *Note: This command assumes you have the environment variables `MAPS_API_KEY` and `GOOGLE_CLOUD_PROJECT` set in your current shell.*
+# Example Usage
 
-3.  **Permissions**:
-    Ensure the Cloud Run service account has the following IAM roles:
-    *   `BigQuery Data Viewer` and `BigQuery Job User` (to query BigQuery).
-    *   `Storage Object Admin` on the bucket `pet-passport-data-$PROJECT_ID` (to upload PDFs).
+## Location Queries
+
+Input:
+
+```text
+Find pet-friendly parks nearby
+```
+
+Output:
+
+```text
+The agent searches Google Maps MCP and returns nearby pet-friendly locations.
+```
+
+---
+
+Input:
+
+```text
+Find veterinary clinics near Manhattan
+```
+
+Output:
+
+```text
+The agent retrieves relevant clinics with location information.
+```
+
+---
+
+## Data Queries
+
+Input:
+
+```text
+Show the most common dog breeds in NYC
+```
+
+Output:
+
+```text
+The agent queries BigQuery and generates breed statistics.
+```
+
+---
+
+# Security Practices
+
+This project follows secure development practices.
+
+Sensitive credentials are stored using environment variables.
+
+Do not commit:
+
+```text
+.env files
+API keys
+Service account credentials
+```
+
+---
+
+# Key Learnings
+
+Concepts explored while building this project:
+
+* Building AI agents with Google ADK
+* Connecting LLMs with external tools
+* Understanding MCP architecture
+* Working with cloud-based AI systems
+* Using Google Cloud services
+* Processing real-world datasets
+* Debugging agent-tool workflows
+
+---
+
+# Future Improvements
+
+Planned extensions:
+
+* Digital pet passport generation
+* Pet vaccination record management
+* International pet travel requirements
+* Airline pet policy integration
+* Personalized pet travel recommendations
+* Multi-agent workflow support
+
